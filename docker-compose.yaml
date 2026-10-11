@@ -1,0 +1,56 @@
+services:
+
+  containly:
+    image: amslertec/containly:latest
+    container_name: containly
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    env_file:
+      - .env
+    volumes:
+      - containly-data:/data
+      - containly-stacks:/stacks
+      - /root/docker/compose-projects:root/docker/compose-projects
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - "8420:8420"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:8420/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      retries: 3    
+
+  socket-proxy:
+    image: tecnativa/docker-socket-proxy:v0.5.0
+    container_name: containly-socket-proxy
+    profiles: ["hardened"]
+    restart: unless-stopped
+    privileged: false
+    environment:
+      CONTAINERS: "1"
+      IMAGES: "1"
+      NETWORKS: "1"
+      VOLUMES: "1"
+      INFO: "1"
+      POST: "1" # allow mutations (start/stop/deploy) — intentionally enabled
+      EXEC: "1" # exec console
+      # Everything else stays blocked by default (e.g. SWARM, system shutdown).
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - containly-internal
+
+networks:
+  containly-internal:
+    driver: bridge
+
+volumes:
+  containly-data:
+  containly-stacks:

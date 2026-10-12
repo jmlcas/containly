@@ -13,7 +13,7 @@ services:
     volumes:
       - containly-data:/data
       - containly-stacks:/stacks
-      - /root/docker/compose-projects:root/docker/compose-projects
+      - /root/docker/compose-projects:/root/docker/compose-projects
       - /var/run/docker.sock:/var/run/docker.sock:ro
     ports:
       - "8420:8420"
